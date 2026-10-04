@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block container_class %}{% endblock %}
+
+{% block hero %}
+<section class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-3">探索中国 · 发现精彩</h1>
+        <p class="lead mb-4">智能分析景点数据，AI规划专属旅程</p>
+        <form action="{% url 'attractions:search' %}" method="get" class="search-box d-flex">
+            <input type="text" name="q" class="form-control form-control-lg" placeholder="搜索景点名称、城市...">
+            <button type="submit" class="btn btn-warning btn-lg"><i class="fas fa-search"></i></button>
+        </form>
+        <div class="mt-4">
+            <a href="{% url 'attractions:list' %}" class="btn btn-outline-light btn-lg me-2"><i class="fas fa-list me-2"></i>浏览景点</a>
+            <a href="{% url 'ai_recommend:page' %}" class="btn btn-light btn-lg"><i class="fas fa-magic me-2"></i>AI智能推荐</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- 统计数据 -->
+    <div class="row text-center mb-5">
+        <div class="col-md-3">
+            <div class="card p-4">
+                <i class="fas fa-mountain fa-3x text-primary mb-3"></i>
+                <h3 class="fw-bold">{{ total_attractions }}</h3>
+                <p class="text-muted mb-0">景点总数</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4">
+                <i class="fas fa-city fa-3x text-success mb-3"></i>
+                <h3 class="fw-bold">{{ total_cities }}</h3>
+                <p class="text-muted mb-0">覆盖城市</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4">
+                <i class="fas fa-map fa-3x text-warning mb-3"></i>
+                <h3 class="fw-bold">{{ total_provinces }}</h3>
+                <p class="text-muted mb-0">覆盖省份</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4">
+                <i class="fas fa-comments fa-3x text-danger mb-3"></i>
+                <h3 class="fw-bold">{{ total_comments|floatformat:0 }}万+</h3>
+                <p class="text-muted mb-0">用户评论</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 热门景点 -->
+    <h3 class="section-title"><i class="fas fa-fire text-danger me-2"></i>热门景点</h3>
+    <div class="row">
+        {% for attraction in hot_attractions %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card h-100">
+                <div class="position-relative">
+                    <img src="{{ attraction.image_url }}" class="card-img-top" alt="{{ attraction.name }}" onerror="this.src='https://picsum.photos/400/300?random={{ attraction.id }}'">
+                    {% if attraction.level %}
+                    <span class="position-absolute top-0 end-0 m-2 level-badge">{{ attraction.level }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title text-truncate">{{ attraction.name }}</h5>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ attraction.city.province.name }} · {{ attraction.city.name }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="score-badge"><i class="fas fa-star me-1"></i>{{ attraction.score|default:'暂无' }}</span>
+                        <span class="price-tag">
+                            {% if attraction.price and attraction.price > 0 %}¥{{ attraction.price|floatformat:0 }}{% else %}免费{% endif %}
+                        </span>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">
+                        <i class="fas fa-comment me-1"></i>{{ attraction.comment_count|floatformat:0 }} 条评论
+                    </p>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <a href="{% url 'attractions:detail' attraction.pk %}" class="btn btn-primary btn-sm w-100">查看详情</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+            <p class="text-muted">暂无景点数据</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="text-center mt-3">
+        <a href="{% url 'attractions:list' %}" class="btn btn-outline-primary btn-lg">
+            <i class="fas fa-th-list me-2"></i>查看全部景点
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据分析 - 旅游景点推荐系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .chart-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 15px rgba(0,0,0,.08);height:100%}
+        .chart-title{font-weight:600;margin-bottom:15px;color:#333;border-left:4px solid #1a73e8;padding-left:10px}
+        .chart-box{height:320px}
+        .stat-card{text-align:center;padding:25px;background:linear-gradient(135deg,#1a73e8,#34a853);color:#fff;border-radius:12px}
+        .stat-num{font-size:2.5rem;font-weight:bold}
+        #mapChart{height:500px}
+        .section-title { position: relative; margin-bottom: 30px; padding-bottom: 10px; }
+        .section-title::after { content: ''; position: absolute; bottom: 0; left: 0; width: 50px; height: 3px; background: #1a73e8; }
+        .footer { background: #2c3e50; color: #ecf0f1; padding: 30px 0; margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="fas fa-map-marked-alt me-2"></i>旅游景点推荐</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home me-1"></i>首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/list/"><i class="fas fa-mountain me-1"></i>景点</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/visualization/"><i class="fas fa-chart-bar me-1"></i>数据分析</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/recommend/"><i class="fas fa-robot me-1"></i>AI推荐</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h3 class="section-title mb-4"><i class="fas fa-chart-line text-primary me-2"></i>数据分析大屏</h3>
+
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3"><div class="stat-card"><div class="stat-num" id="statAttr">-</div><div>景点总数</div></div></div>
+            <div class="col-md-3 mb-3"><div class="stat-card" style="background:linear-gradient(135deg,#ff6b6b,#ffa502)"><div class="stat-num" id="statCity">-</div><div>覆盖城市</div></div></div>
+            <div class="col-md-3 mb-3"><div class="stat-card" style="background:linear-gradient(135deg,#a55eea,#8854d0)"><div class="stat-num" id="statProv">-</div><div>覆盖省份</div></div></div>
+            <div class="col-md-3 mb-3"><div class="stat-card" style="background:linear-gradient(135deg,#20bf6b,#26de81)"><div class="stat-num" id="statScore">-</div><div>平均评分</div></div></div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-card">
+                    <div class="chart-title"><i class="fas fa-map-marked-alt text-danger me-2"></i>全国景点分布地图</div>
+                    <div id="mapChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card"><div class="chart-title"><i class="fas fa-star text-warning me-2"></i>景点评分分布</div><div id="scoreChart" class="chart-box"></div></div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card"><div class="chart-title"><i class="fas fa-ticket-alt text-info me-2"></i>票价分布</div><div id="priceChart" class="chart-box"></div></div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card"><div class="chart-title"><i class="fas fa-map text-success me-2"></i>各省份景点数量</div><div id="provinceChart" class="chart-box"></div></div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card"><div class="chart-title"><i class="fas fa-award text-danger me-2"></i>景区等级分布</div><div id="levelChart" class="chart-box"></div></div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card"><div class="chart-title"><i class="fas fa-fire text-danger me-2"></i>评论数TOP10景点</div><div id="commentsChart" class="chart-box"></div></div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-card"><div class="chart-title"><i class="fas fa-chart-bar text-primary me-2"></i>各省份平均评分</div><div id="avgScoreChart" class="chart-box"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-1"><i class="fas fa-graduation-cap me-2"></i>毕业设计作品 - 国内旅游景点分析与AI旅游路线推荐系统</p>
+            <p class="mb-0 text-muted">基于 Django + MySQL + ECharts + DeepSeek</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://api.map.baidu.com/api?v=3.0&ak=yW4WetK4vnUoXiJFUvwO73Uor7GYP46U"></script>
+    <script>
+    function initChart(id) { return echarts.init(document.getElementById(id)); }
+
+    // 统计数据
+    fetch('/visualization/api/stats/').then(function(r){return r.json();}).then(function(d){
+        document.getElementById('statAttr').textContent = d.attractions;
+        document.getElementById('statCity').textContent = d.cities;
+        document.getElementById('statProv').textContent = d.provinces;
+        document.getElementById('statScore').textContent = d.avg_score;
+    });
+
+    // 百度地图
+    var bmap = new BMap.Map("mapChart");
+    bmap.centerAndZoom(new BMap.Point(108.5, 34.3), 5);
+    bmap.enableScrollWheelZoom();
+    bmap.addControl(new BMap.NavigationControl());
+
+    fetch('/visualization/api/map-data/').then(function(r){return r.json();}).then(function(d){
+        d.data.forEach(function(item){
+            if(item.value[0] && item.value[1]){
+                var point = new BMap.Point(item.value[0], item.value[1]);
+                var marker = new BMap.Marker(point);
+                bmap.addOverlay(marker);
+                var info = "<div style='padding:5px;'><b>"+item.name+"</b><br>城市: "+item.city+"<br>评分: "+item.score+"</div>";
+                var infoWindow = new BMap.InfoWindow(info);
+                marker.addEventListener("click", function(){ this.openInfoWindow(infoWindow); });
+            }
+        });
+    });
+
+    // 评分分布
+    fetch('/visualization/api/score-distribution/').then(function(r){return r.json();}).then(function(d){
+        initChart('scoreChart').setOption({
+            tooltip:{trigger:'item',formatter:'{b}: {c} ({d}%)'},
+            color:['#ff6b6b','#ffa502','#2ed573','#1e90ff','#a55eea'],
+            series:[{type:'pie',radius:['45%','75%'],itemStyle:{borderRadius:8},label:{formatter:'{b}\n{c}个'},data:d.data}]
+        });
+    });
+
+    // 票价分布
+    fetch('/visualization/api/price-distribution/').then(function(r){return r.json();}).then(function(d){
+        initChart('priceChart').setOption({
+            tooltip:{trigger:'item',formatter:'{b}: {c} ({d}%)'},
+            color:['#26de81','#fed330','#fd9644','#fc5c65','#a55eea'],
+            series:[{type:'pie',radius:'65%',roseType:'radius',label:{formatter:'{b}: {c}'},data:d.data}]
+        });
+    });
+
+    // 省份景点数量
+    fetch('/visualization/api/province-count/').then(function(r){return r.json();}).then(function(d){
+        initChart('provinceChart').setOption({
+            tooltip:{trigger:'axis'},grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+            xAxis:{type:'category',data:d.provinces,axisLabel:{rotate:30}},
+            yAxis:{type:'value'},
+            series:[{type:'bar',data:d.counts,itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#1a73e8'},{offset:1,color:'#34a853'}])}}]
+        });
+    });
+
+    // 景区等级
+    fetch('/visualization/api/level-distribution/').then(function(r){return r.json();}).then(function(d){
+        initChart('levelChart').setOption({
+            tooltip:{trigger:'item'},
+            color:['#ff6348','#ffa502','#2ed573','#1e90ff','#a55eea','#747d8c'],
+            series:[{type:'pie',radius:['40%','70%'],avoidLabelOverlap:false,itemStyle:{borderRadius:10},data:d.data}]
+        });
+    });
+
+    // 评论TOP10
+    fetch('/visualization/api/top-comments/').then(function(r){return r.json();}).then(function(d){
+        initChart('commentsChart').setOption({
+            tooltip:{trigger:'axis'},grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+            xAxis:{type:'value'},yAxis:{type:'category',data:d.names.reverse(),axisLabel:{width:80,overflow:'truncate'}},
+            series:[{type:'bar',data:d.counts.reverse(),itemStyle:{color:new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:'#ff6b6b'},{offset:1,color:'#ffa502'}])}}]
+        });
+    });
+
+    // 省份平均评分
+    fetch('/visualization/api/province-avg-score/').then(function(r){return r.json();}).then(function(d){
+        initChart('avgScoreChart').setOption({
+            tooltip:{trigger:'axis'},grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+            xAxis:{type:'category',data:d.provinces,axisLabel:{rotate:30}},
+            yAxis:{type:'value',min:3,max:5},
+            series:[{type:'bar',data:d.scores,itemStyle:{color:'#2ed573'},label:{show:true,position:'top'}}]
+        });
+    });
+
+    window.addEventListener('resize',function(){
+        ['scoreChart','priceChart','provinceChart','levelChart','commentsChart','avgScoreChart'].forEach(function(id){
+            var chart = echarts.getInstanceByDom(document.getElementById(id));
+            if(chart) chart.resize();
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}我的收藏 - 旅游景点推荐系统{% endblock %}
+
+{% block content %}
+<h3 class="section-title mb-4"><i class="fas fa-heart text-danger me-2"></i>我的收藏</h3>
+
+<div class="row">
+    {% for fav in favorites %}
+    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div class="card h-100">
+            <div class="position-relative">
+                <img src="{{ fav.attraction.image_url }}" class="card-img-top" style="height:160px;object-fit:cover" onerror="this.src='https://picsum.photos/400/300?random={{ fav.attraction.id }}'">
+                <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" onclick="removeFav({{ fav.attraction.id }}, this)" title="取消收藏">
+                    <i class="fas fa-heart-broken"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title text-truncate">{{ fav.attraction.name }}</h5>
+                <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i>{{ fav.attraction.city.province.name }} · {{ fav.attraction.city.name }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="score-badge"><i class="fas fa-star me-1"></i>{{ fav.attraction.score|default:'--' }}</span>
+                    <span class="price-tag">{% if fav.attraction.price and fav.attraction.price > 0 %}¥{{ fav.attraction.price|floatformat:0 }}{% else %}免费{% endif %}</span>
+                </div>
+                <p class="text-muted small mt-2 mb-0">收藏于 {{ fav.created_at|date:'Y-m-d' }}</p>
+            </div>
+            <div class="card-footer bg-white border-0">
+                <a href="{% url 'attractions:detail' fav.attraction.pk %}" class="btn btn-primary btn-sm w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-heart fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">还没有收藏任何景点</h5>
+        <p class="text-muted">去<a href="{% url 'attractions:list' %}">景点列表</a>看看吧</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function removeFav(id, btn) {
+    if (!confirm('确定取消收藏？')) return;
+    fetch('/users/favorite/remove/' + id + '/', {
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    }).then(r => r.json()).then(d => {
+        if (d.success) btn.closest('.col-lg-3').remove();
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}{{ attraction.name }} - 旅游景点推荐系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 0; margin-top: -24px; }
+    .detail-img { width: 100%; height: 350px; object-fit: cover; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+    .info-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+    .info-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+    .info-item:last-child { border-bottom: none; }
+    .info-label { color: #666; font-size: 0.9rem; }
+    .info-value { font-weight: 500; color: #333; }
+    .big-score { font-size: 3rem; font-weight: bold; color: #ff6b6b; }
+    #map { height: 300px; border-radius: 12px; }
+</style>
+{% endblock %}
+
+{% block container_class %}{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-3">
+                <li class="breadcrumb-item"><a href="{% url 'attractions:index' %}" class="text-white-50">首页</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'attractions:list' %}" class="text-white-50">景点列表</a></li>
+                <li class="breadcrumb-item active text-white">{{ attraction.name }}</li>
+            </ol>
+        </nav>
+        <h1 class="display-5 fw-bold">{{ attraction.name }}</h1>
+        <p class="lead mb-0">
+            <i class="fas fa-map-marker-alt me-2"></i>{{ attraction.city.province.name }} · {{ attraction.city.name }}
+            {% if attraction.level %}<span class="badge bg-success ms-2">{{ attraction.level }}景区</span>{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="container mt-n5">
+    <div class="row">
+        <div class="col-lg-8">
+            <img src="{{ attraction.image_url }}" class="detail-img mb-4" alt="{{ attraction.name }}" onerror="this.src='https://picsum.photos/800/400?random={{ attraction.id }}'">
+            
+            <div class="info-card mb-4">
+                <h4 class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i>景点介绍</h4>
+                <p class="text-muted">{{ attraction.description|default:'暂无详细介绍' }}</p>
+            </div>
+
+            {% if attraction.longitude and attraction.latitude %}
+            <div class="info-card mb-4">
+                <h4 class="mb-3"><i class="fas fa-map text-primary me-2"></i>地理位置</h4>
+                <div id="map"></div>
+                <p class="text-muted small mt-2 mb-0">
+                    <i class="fas fa-location-arrow me-1"></i>经度: {{ attraction.longitude }}，纬度: {{ attraction.latitude }}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="info-card mb-4 text-center">
+                <div class="big-score">{{ attraction.score|default:'--' }}</div>
+                <p class="text-muted mb-0">用户评分</p>
+                <div class="mt-2">
+                    {% for i in "12345" %}
+                    <i class="fas fa-star {% if attraction.score and forloop.counter <= attraction.score %}text-warning{% else %}text-muted{% endif %}"></i>
+                    {% endfor %}
+                </div>
+                <p class="mt-2 mb-3"><i class="fas fa-comment me-1"></i>{{ attraction.comment_count }} 条评论</p>
+                {% if user.is_authenticated %}
+                    {% if is_favorited %}
+                    <a href="{% url 'users:remove_favorite' attraction.pk %}?next={% url 'attractions:detail' attraction.pk %}" class="btn btn-outline-danger w-100"><i class="fas fa-heart-broken me-2"></i>取消收藏</a>
+                    {% else %}
+                    <a href="{% url 'users:add_favorite' attraction.pk %}" class="btn btn-danger w-100"><i class="fas fa-heart me-2"></i>收藏景点</a>
+                    {% endif %}
+                {% else %}
+                <a href="{% url 'users:login' %}" class="btn btn-outline-secondary w-100"><i class="fas fa-heart me-2"></i>登录后收藏</a>
+                {% endif %}
+            </div>
+
+            <div class="info-card mb-4">
+                <h5 class="mb-3"><i class="fas fa-ticket-alt text-primary me-2"></i>门票价格</h5>
+                <div class="text-center">
+                    {% if attraction.price and attraction.price > 0 %}
+                    <span class="display-6 text-danger fw-bold">¥{{ attraction.price|floatformat:0 }}</span>
+                    <span class="text-muted">/人</span>
+                    {% else %}
+                    <span class="display-6 text-success fw-bold">免费</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h5 class="mb-3"><i class="fas fa-list-ul text-primary me-2"></i>基本信息</h5>
+                <div class="info-item">
+                    <div class="info-label">详细地址</div>
+                    <div class="info-value">{{ attraction.address|default:'暂无' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">开放时间</div>
+                    <div class="info-value">{{ attraction.open_time|default:'全天开放' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">景区等级</div>
+                    <div class="info-value">{{ attraction.level|default:'暂无' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 相关推荐 -->
+    {% if related_attractions %}
+    <h4 class="section-title mt-5"><i class="fas fa-thumbs-up text-primary me-2"></i>同城市景点推荐</h4>
+    <div class="row">
+        {% for r in related_attractions %}
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100">
+                <img src="{{ r.image_url }}" class="card-img-top" style="height:150px;object-fit:cover;" onerror="this.src='https://picsum.photos/400/300?random={{ r.id }}'">
+                <div class="card-body">
+                    <h6 class="card-title text-truncate">{{ r.name }}</h6>
+                    <div class="d-flex justify-content-between">
+                        <span class="score-badge small"><i class="fas fa-star me-1"></i>{{ r.score|default:'--' }}</span>
+                        <span class="price-tag small">{% if r.price and r.price > 0 %}¥{{ r.price|floatformat:0 }}{% else %}免费{% endif %}</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 pt-0">
+                    <a href="{% url 'attractions:detail' r.pk %}" class="btn btn-outline-primary btn-sm w-100">查看</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if attraction.longitude and attraction.latitude %}
+<script src="https://api.map.baidu.com/api?v=3.0&ak=yW4WetK4vnUoXiJFUvwO73Uor7GYP46U"></script>
+<script>
+    var map = new BMap.Map("map");
+    var point = new BMap.Point({{ attraction.longitude }}, {{ attraction.latitude }});
+    map.centerAndZoom(point, 15);
+    map.enableScrollWheelZoom();
+    map.addControl(new BMap.NavigationControl());
+    map.addControl(new BMap.ScaleControl());
+    var marker = new BMap.Marker(point);
+    map.addOverlay(marker);
+    var infoWindow = new BMap.InfoWindow("<div style='padding:5px;font-size:14px;'><b>{{ attraction.name }}</b><br>{{ attraction.address }}</div>");
+    marker.addEventListener("click", function(){ this.openInfoWindow(infoWindow); });
+    marker.openInfoWindow(infoWindow);
+</script>
+{% endif %}
+{% endblock %}

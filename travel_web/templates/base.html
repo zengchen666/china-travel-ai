@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}旅游景点推荐系统{% endblock %}</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #34a853;
+        }
+        body { background-color: #f8f9fa; }
+        .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar-brand { font-weight: bold; font-size: 1.4rem; }
+        .nav-link { font-weight: 500; margin: 0 5px; }
+        .nav-link:hover { color: #ffc107 !important; }
+        .hero-section {
+            background: linear-gradient(135deg, #1a73e8 0%, #34a853 100%);
+            color: white;
+            padding: 80px 0;
+            margin-bottom: 40px;
+        }
+        .card { border: none; box-shadow: 0 2px 15px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; border-radius: 12px; overflow: hidden; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .card-img-top { height: 180px; object-fit: cover; }
+        .score-badge { background: linear-gradient(135deg, #ff6b6b, #ffa502); color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
+        .price-tag { color: #e74c3c; font-weight: bold; font-size: 1.1rem; }
+        .btn-primary { background: linear-gradient(135deg, #1a73e8, #1557b0); border: none; }
+        .btn-primary:hover { background: linear-gradient(135deg, #1557b0, #0d47a1); }
+        .footer { background: #2c3e50; color: #ecf0f1; padding: 30px 0; margin-top: 50px; }
+        .search-box { max-width: 600px; margin: 0 auto; }
+        .search-box .form-control { border-radius: 25px 0 0 25px; padding: 12px 20px; border: none; }
+        .search-box .btn { border-radius: 0 25px 25px 0; padding: 12px 30px; }
+        .section-title { position: relative; margin-bottom: 30px; padding-bottom: 10px; }
+        .section-title::after { content: ''; position: absolute; bottom: 0; left: 0; width: 50px; height: 3px; background: var(--primary-color); }
+        .level-badge { background: #27ae60; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'attractions:index' %}">
+                <i class="fas fa-map-marked-alt me-2"></i>旅游景点推荐
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'attractions:index' %}"><i class="fas fa-home me-1"></i>首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'attractions:list' %}"><i class="fas fa-mountain me-1"></i>景点</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'visualization:dashboard' %}"><i class="fas fa-chart-bar me-1"></i>数据分析</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ai_recommend:page' %}"><i class="fas fa-robot me-1"></i>AI推荐</a></li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'users:profile' %}"><i class="fas fa-user me-1"></i>{{ user.username }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'users:logout' %}"><i class="fas fa-sign-out-alt me-1"></i>退出</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'users:login' %}"><i class="fas fa-sign-in-alt me-1"></i>登录</a></li>
+                    <li class="nav-item"><a class="nav-link btn btn-warning text-dark px-3 ms-2" href="{% url 'users:register' %}">注册</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {% block hero %}{% endblock %}
+
+    <div class="container {% block container_class %}mt-4{% endblock %}">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-1"><i class="fas fa-graduation-cap me-2"></i>毕业设计作品 - 国内旅游景点分析与AI旅游路线推荐系统</p>
+            <p class="mb-0 text-muted">基于 Django + MySQL + ECharts + DeepSeek</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

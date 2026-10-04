@@ -1,0 +1,40 @@
+# ---------- 环境变量与密钥（严禁提交） ----------
+.env
+*.env
+!.env.example
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ---------- 虚拟环境 ----------
+venv/
+.venv/
+env/
+
+# ---------- Django ----------
+db.sqlite3
+*.log
+staticfiles/
+
+# 景点图片体积过大（约 300MB+），不纳入版本库；
+# 需要时按 README「数据 pipeline」一节重新运行爬虫与下载脚本生成
+travel_web/media/attractions/
+
+# 爬虫接口调试快照（原始数据 attractions.json / 清洗 CSV 保留入库，便于快速复现）
+crawler/data/api_response.json
+crawler/data/api_test.json
+
+# ---------- IDE / 系统 ----------
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------- WorkBuddy ----------
+.workbuddy/

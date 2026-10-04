@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% block title %}AI旅游推荐 - 旅游景点推荐系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.recommendation-content { white-space: pre-wrap; background: #f8f9fa; padding: 25px; border-radius: 12px; line-height: 1.8; }
+.map-card { display: none; }
+.point-list { max-height: 200px; overflow-y: auto; }
+.point-item { padding: 8px 12px; border-bottom: 1px solid #eee; cursor: pointer; }
+.point-item:hover { background: #f0f7ff; }
+/* 美化AI推荐结果 */
+.ai-result { padding: 20px; }
+.ai-title { font-size: 1.5rem; font-weight: bold; color: #1a73e8; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #1a73e8; }
+.ai-section { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.ai-section-title { font-size: 1.2rem; font-weight: 600; color: #333; margin-bottom: 15px; display: flex; align-items: center; }
+.ai-section-title i { margin-right: 10px; }
+.day-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+.day-card h4 { margin: 0 0 10px 0; font-size: 1.1rem; }
+.day-card p { margin: 5px 0; font-size: 0.95rem; opacity: 0.95; }
+.tip-item { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 15px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+.food-item { background: #d4edda; border-left: 4px solid #28a745; padding: 10px 15px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+.budget-item { background: #cce5ff; border-left: 4px solid #007bff; padding: 10px 15px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 class="section-title mb-4"><i class="fas fa-robot text-primary me-2"></i>AI智能旅游路线推荐</h3>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-edit me-2"></i>填写旅行信息
+            </div>
+            <div class="card-body">
+                <form id="recommendForm">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-city me-1"></i>目标城市</label>
+                        <select name="city" class="form-select" required>
+                            <option value="">请选择城市</option>
+                            {% for city in cities %}
+                            <option value="{{ city.name }}">{{ city.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-cloud-sun me-1"></i>旅游季节</label>
+                        <select name="season" class="form-select" required>
+                            <option value="春季">🌸 春季（3-5月）</option>
+                            <option value="夏季">☀️ 夏季（6-8月）</option>
+                            <option value="秋季">🍂 秋季（9-11月）</option>
+                            <option value="冬季">❄️ 冬季（12-2月）</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-1"></i>行程天数</label>
+                        <input type="number" name="days" class="form-control" value="3" min="1" max="14" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-yen-sign me-1"></i>预算（元）</label>
+                        <input type="number" name="budget" class="form-control" value="3000" min="500" step="500" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn">
+                        <i class="fas fa-magic me-2"></i>获取AI推荐
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 推荐景点列表 -->
+        <div class="card map-card" id="pointsCard">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-map-marker-alt me-2"></i>推荐景点
+            </div>
+            <div class="card-body p-0">
+                <div class="point-list" id="pointList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <!-- 推荐结果 -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-route me-2"></i>AI推荐路线
+            </div>
+            <div class="card-body">
+                <div id="loading" class="text-center py-5" style="display:none">
+                    <div class="spinner-border text-primary" style="width:3rem;height:3rem" role="status"></div>
+                    <p class="mt-3 text-muted">🤖 AI正在为您规划专属路线，请稍候...</p>
+                    <small class="text-muted">（大约需要10-20秒）</small>
+                </div>
+                <div id="result">
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-lightbulb fa-4x mb-3" style="color:#ffc107"></i>
+                        <h5>智能旅游规划</h5>
+                        <p>填写左侧信息，AI将为您生成个性化旅游路线</p>
+                        <small>基于 DeepSeek 大模型 + 携程真实景点数据</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 地图 -->
+        <div class="card map-card" id="mapCard">
+            <div class="card-header">
+                <i class="fas fa-map me-2"></i>景点分布地图
+            </div>
+            <div class="card-body">
+                <div id="map" style="height:400px;border-radius:8px"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://api.map.baidu.com/api?v=3.0&ak=yW4WetK4vnUoXiJFUvwO73Uor7GYP46U"></script>
+<script>
+var bmap = null;
+
+document.getElementById('recommendForm').onsubmit = function(e) {
+    e.preventDefault();
+    var form = new FormData(this);
+    var data = {
+        city: form.get('city'),
+        season: form.get('season'),
+        days: parseInt(form.get('days')),
+        budget: parseInt(form.get('budget'))
+    };
+    
+    if (!data.city) {
+        alert('请选择目标城市');
+        return;
+    }
+    
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('result').innerHTML = '';
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>AI规划中...';
+    document.getElementById('mapCard').style.display = 'none';
+    document.getElementById('pointsCard').style.display = 'none';
+    
+    fetch('/recommend/api/recommend/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-magic me-2"></i>获取AI推荐';
+        
+        if (res.success) {
+            // 将Markdown转换为美观的HTML
+            var content = formatRecommendation(res.recommendation);
+            document.getElementById('result').innerHTML = content;
+            
+            // 显示地图和景点
+            if (res.map_points && res.map_points.length > 0) {
+                showMap(res.map_points, res.city);
+            }
+        } else {
+            document.getElementById('result').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>' + res.error + '</div>';
+        }
+    })
+    .catch(function(err) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-magic me-2"></i>获取AI推荐';
+        document.getElementById('result').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>请求失败，请稍后重试</div>';
+    });
+};
+
+function showMap(points, city) {
+    document.getElementById('mapCard').style.display = 'block';
+    document.getElementById('pointsCard').style.display = 'block';
+    
+    // 初始化地图
+    if (!bmap) {
+        bmap = new BMap.Map("map");
+    }
+    bmap.clearOverlays();
+    
+    // 设置中心点
+    if (points.length > 0) {
+        var centerLng = points.reduce(function(sum, p) { return sum + p.lng; }, 0) / points.length;
+        var centerLat = points.reduce(function(sum, p) { return sum + p.lat; }, 0) / points.length;
+        bmap.centerAndZoom(new BMap.Point(centerLng, centerLat), 13);
+    }
+    
+    bmap.enableScrollWheelZoom();
+    bmap.addControl(new BMap.NavigationControl());
+    
+    // 景点列表
+    var listHtml = '';
+    var colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6'];
+    
+    points.forEach(function(p, i) {
+        var point = new BMap.Point(p.lng, p.lat);
+        
+        // 创建带序号的标注
+        var label = new BMap.Label(i + 1, {
+            position: point,
+            offset: new BMap.Size(-10, -10)
+        });
+        label.setStyle({
+            color: '#fff',
+            backgroundColor: colors[i % colors.length],
+            border: 'none',
+            borderRadius: '50%',
+            width: '24px',
+            height: '24px',
+            lineHeight: '24px',
+            textAlign: 'center',
+            fontSize: '14px',
+            fontWeight: 'bold'
+        });
+        bmap.addOverlay(label);
+        
+        // 创建标注点
+        var marker = new BMap.Marker(point);
+        bmap.addOverlay(marker);
+        
+        // 信息窗口
+        var info = '<div style="padding:5px"><b>' + (i+1) + '. ' + p.name + '</b><br>评分: ' + p.score + '</div>';
+        var infoWindow = new BMap.InfoWindow(info);
+        marker.addEventListener("click", function() { this.openInfoWindow(infoWindow); });
+        
+        // 列表项
+        listHtml += '<div class="point-item" onclick="focusPoint(' + p.lng + ',' + p.lat + ',\'' + p.name + '\')">' +
+            '<span class="badge me-2" style="background:' + colors[i % colors.length] + '">' + (i+1) + '</span>' +
+            p.name + ' <small class="text-muted">(' + p.score + '分)</small></div>';
+    });
+    
+    document.getElementById('pointList').innerHTML = listHtml;
+    
+    // 绘制路线
+    if (points.length > 1) {
+        var path = points.map(function(p) { return new BMap.Point(p.lng, p.lat); });
+        var polyline = new BMap.Polyline(path, {
+            strokeColor: "#1a73e8",
+            strokeWeight: 3,
+            strokeOpacity: 0.8,
+            strokeStyle: "dashed"
+        });
+        bmap.addOverlay(polyline);
+    }
+}
+
+function focusPoint(lng, lat, name) {
+    if (bmap) {
+        bmap.centerAndZoom(new BMap.Point(lng, lat), 16);
+    }
+}
+
+function formatRecommendation(text) {
+    var html = '<div class="ai-result">';
+    var lines = text.split('\n');
+    var inDay = false;
+    
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line || line.match(/^---+$/)) continue;
+        
+        line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        
+        if (line.match(/^#\s+(.+)/)) {
+            if (inDay) { html += '</div>'; inDay = false; }
+            html += '<div class="ai-title">' + line.replace(/^#\s+/, '') + '</div>';
+        }
+        else if (line.match(/^##\s+(.+)/) || line.match(/^###\s+(.+)/)) {
+            if (inDay) { html += '</div>'; inDay = false; }
+            var title = line.replace(/^#{2,3}\s+/, '');
+            if (title.match(/第\d+天/)) {
+                html += '<div class="day-card"><h4>' + title + '</h4>';
+                inDay = true;
+            } else {
+                html += '<div class="ai-section"><div class="ai-section-title">' + title + '</div>';
+            }
+        }
+        else if (line.match(/^[-*]\s+(.+)/)) {
+            var item = line.replace(/^[-*]\s+/, '');
+            if (inDay) {
+                html += '<p style="margin:5px 0;">' + item + '</p>';
+            } else {
+                html += '<div class="tip-item">' + item + '</div>';
+            }
+        }
+        else {
+            html += '<p style="margin:8px 0;color:#555;">' + line + '</p>';
+        }
+    }
+    if (inDay) html += '</div>';
+    html += '</div>';
+    return html;
+}
+</script>
+{% endblock %}

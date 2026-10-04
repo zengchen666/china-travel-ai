@@ -1,0 +1,18 @@
+# Web 框架
+Django==4.2
+django-simpleui==2023.8.28
+
+# 数据库
+pymysql==1.1.0
+cryptography==41.0.7
+
+# 数据处理
+pandas==2.1.4
+numpy==1.26.2
+
+# 爬虫与网络请求
+requests==2.31.0
+
+# 配置与工具
+python-dotenv==1.0.0
+Pillow==10.1.0

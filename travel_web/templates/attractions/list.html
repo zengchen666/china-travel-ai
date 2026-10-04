@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}景点列表 - 旅游景点推荐系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="section-title mb-0"><i class="fas fa-mountain text-primary me-2"></i>景点列表</h3>
+    <span class="text-muted">共 {{ attractions.paginator.count }} 个景点</span>
+</div>
+
+<!-- 筛选栏 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">省份</label>
+                <select name="province" class="form-select" onchange="this.form.submit()">
+                    <option value="">全部省份</option>
+                    {% for p in provinces %}
+                    <option value="{{ p.id }}" {% if current_province == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">排序</label>
+                <select name="sort" class="form-select" onchange="this.form.submit()">
+                    <option value="comments" {% if current_sort == 'comments' %}selected{% endif %}>评论最多</option>
+                    <option value="score" {% if current_sort == 'score' %}selected{% endif %}>评分最高</option>
+                    <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>价格从低到高</option>
+                    <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>价格从高到低</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'attractions:list' %}" class="btn btn-outline-secondary">重置筛选</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 景点列表 -->
+<div class="row">
+    {% for attraction in attractions %}
+    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div class="card h-100">
+            <div class="position-relative">
+                <img src="{{ attraction.image_url }}" class="card-img-top" alt="{{ attraction.name }}" onerror="this.src='https://picsum.photos/400/300?random={{ attraction.id }}'">
+                {% if attraction.level %}<span class="position-absolute top-0 end-0 m-2 level-badge">{{ attraction.level }}</span>{% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title text-truncate" title="{{ attraction.name }}">{{ attraction.name }}</h5>
+                <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i>{{ attraction.city.province.name }} · {{ attraction.city.name }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="score-badge"><i class="fas fa-star me-1"></i>{{ attraction.score|default:'暂无' }}</span>
+                    <span class="price-tag">{% if attraction.price and attraction.price > 0 %}¥{{ attraction.price|floatformat:0 }}{% else %}免费{% endif %}</span>
+                </div>
+                <p class="text-muted small mt-2 mb-0"><i class="fas fa-comment me-1"></i>{{ attraction.comment_count }} 条评论</p>
+            </div>
+            <div class="card-footer bg-white border-0">
+                <a href="{% url 'attractions:detail' attraction.pk %}" class="btn btn-primary btn-sm w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <p class="text-muted">没有找到符合条件的景点</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 分页 -->
+{% if attractions.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if attractions.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ attractions.previous_page_number }}&province={{ current_province|default:'' }}&sort={{ current_sort }}">上一页</a></li>
+        {% endif %}
+        {% for num in attractions.paginator.page_range %}
+            {% if attractions.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > attractions.number|add:'-3' and num < attractions.number|add:'3' %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}&province={{ current_province|default:'' }}&sort={{ current_sort }}">{{ num }}</a></li>
+            {% endif %}
+        {% endfor %}
+        {% if attractions.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ attractions.next_page_number }}&province={{ current_province|default:'' }}&sort={{ current_sort }}">下一页</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

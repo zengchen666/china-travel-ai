@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}推荐历史 - 旅游景点推荐系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="section-title mb-0"><i class="fas fa-history text-primary me-2"></i>我的推荐历史</h3>
+    <a href="{% url 'ai_recommend:page' %}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>新建推荐</a>
+</div>
+
+<div class="row">
+    {% for item in history %}
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                    <strong>{{ item.city }}</strong>
+                    <span class="badge bg-info ms-2">{{ item.season }}</span>
+                    <span class="badge bg-success ms-1">{{ item.days }}天</span>
+                    <span class="badge bg-warning ms-1">¥{{ item.budget|floatformat:0 }}</span>
+                </div>
+                <small class="text-muted">{{ item.created_at|date:'Y-m-d H:i' }}</small>
+            </div>
+            <div class="card-body">
+                <div class="recommendation-preview" style="max-height:200px;overflow:hidden;position:relative;">
+                    <pre style="white-space:pre-wrap;font-family:inherit;margin:0;">{{ item.recommendation|truncatechars:500 }}</pre>
+                    <div style="position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(transparent,white);"></div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm mt-3" onclick="showFull(this, {{ item.id }})">
+                    <i class="fas fa-expand me-1"></i>查看完整内容
+                </button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-robot fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">还没有推荐记录</h5>
+        <p class="text-muted">去<a href="{% url 'ai_recommend:page' %}">AI推荐</a>获取你的专属旅游路线吧</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 完整内容模态框 -->
+<div class="modal fade" id="fullModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-route me-2"></i>推荐详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="fullContent" style="white-space:pre-wrap;font-family:inherit;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var historyData = {
+    {% for item in history %}
+    {{ item.id }}: `{{ item.recommendation|escapejs }}`,
+    {% endfor %}
+};
+
+function showFull(btn, id) {
+    document.getElementById('fullContent').textContent = historyData[id];
+    new bootstrap.Modal(document.getElementById('fullModal')).show();
+}
+</script>
+{% endblock %}

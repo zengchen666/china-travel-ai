@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}登录 - 旅游景点推荐系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-card { max-width: 420px; margin: 60px auto; }
+    .login-header { background: linear-gradient(135deg, #1a73e8 0%, #34a853 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
+    .login-body { padding: 30px; background: white; border-radius: 0 0 12px 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+    .form-control { padding: 12px 15px; border-radius: 8px; }
+    .form-control:focus { box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2); }
+    .btn-login { padding: 12px; font-size: 1.1rem; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-card">
+    <div class="login-header">
+        <i class="fas fa-user-circle fa-4x mb-3"></i>
+        <h3 class="mb-0">用户登录</h3>
+    </div>
+    <div class="login-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label"><i class="fas fa-user me-2"></i>用户名</label>
+                <input type="text" name="username" class="form-control" placeholder="请输入用户名" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label"><i class="fas fa-lock me-2"></i>密码</label>
+                <input type="password" name="password" class="form-control" placeholder="请输入密码" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-login w-100">
+                <i class="fas fa-sign-in-alt me-2"></i>登录
+            </button>
+        </form>
+        <hr class="my-4">
+        <p class="text-center text-muted mb-0">
+            还没有账号？<a href="{% url 'users:register' %}" class="text-primary fw-bold">立即注册</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
