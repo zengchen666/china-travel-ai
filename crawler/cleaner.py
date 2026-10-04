@@ -56,7 +56,27 @@ def clean_data(df):
     df['address'] = df['address'].str.strip()
     df['city'] = df['city'].str.strip()
     df['province'] = df['province'].str.strip()
-    
+
+    # 7. 过滤非景点条目：携程接口会混入演唱会/活动等票务内容
+    #    （名称特征为 "城市 · 活动名"）
+    df = df[~df['name'].str.contains(' · ', na=False)]
+    print(f"过滤活动演出条目后: {len(df)} 条")
+
+    # 8. 城市错位修正：接口返回会混入异地推荐内容，
+    #    若地址明确指向另一个已知城市（"X市..." 或以 X 开头），以地址为准
+    known_cities = sorted(set(df['city']) | set(df['province']), key=len, reverse=True)
+
+    def fix_city(row):
+        addr = row['address']
+        if not addr:
+            return row['city']
+        for c in known_cities:
+            if c != row['city'] and (addr.startswith(c) or (c + '市') in addr):
+                return c
+        return row['city']
+
+    df['city'] = df.apply(fix_city, axis=1)
+
     print(f"清洗完成: {len(df)} 条")
     return df
 

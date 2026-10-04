@@ -25,6 +25,9 @@ staticfiles/
 # 需要时按 README「数据 pipeline」一节重新运行爬虫与下载脚本生成
 travel_web/media/attractions/
 
+# RAG 向量索引（可由 python manage.py rebuild_rag 重新构建）
+travel_web/rag_storage/
+
 # 爬虫接口调试快照（原始数据 attractions.json / 清洗 CSV 保留入库，便于快速复现）
 crawler/data/api_response.json
 crawler/data/api_test.json

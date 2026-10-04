@@ -19,7 +19,7 @@
 | 🕷️ 数据采集 | 携程景点爬虫（15 城 × 5 页分页抓取）、Pandas 清洗去重、ORM 批量入库、图片本地化与压缩去重 |
 | 🌐 景点服务 | 首页热门推荐、列表筛选/排序/分页、详情页（地图定位 + 同城推荐）、全文搜索 |
 | 📊 数据可视化 | 评分分布、票价区间、省份景点数、景区等级、评论 TOP10、省份均分对比 + 百度地图全国散点 |
-| 🤖 AI 行程推荐 | DeepSeek 生成逐日行程（城市/季节/天数/预算），正则回查景点经纬度并在地图标注，历史落库 |
+| 🤖 AI 行程推荐 | **RAG 混合检索**（ChromaDB 向量 + jieba TF-IDF 加权融合）召回相关景点 → DeepSeek 生成逐日行程；支持自由文本偏好（如"喜欢历史古迹和美食"），城市选填，推荐不再局限于固定城市；正则回查景点经纬度并在地图标注，历史落库 |
 | 👤 用户体系 | 注册/登录/个人中心、景点收藏（AJAX）、推荐历史 |
 | 🔧 后台管理 | SimpleUI 定制的 Django Admin（景点/用户/收藏/菜单定制） |
 
@@ -44,7 +44,10 @@
 │  attractions     景点三级模型 Province → City → Attraction   │
 │  users           自定义 User / Favorite / TravelHistory      │
 │  visualization   9 个 JSON API ──► ECharts + 百度地图大屏     │
-│  ai_recommend    DB 景点 ──► DeepSeek Prompt ──► 行程+标注   │
+│  ai_recommend    用户偏好 ──► RAG 混合检索 ──► DeepSeek       │
+│                  ├─ ChromaDB 向量召回（本地 ONNX Embedding）  │
+│                  ├─ jieba + TF-IDF 关键词召回（0.4/0.6 融合） │
+│                  └─ 检索结果构造 Prompt ──► 行程 + 地图标注   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -59,6 +62,7 @@
 | 前端 | Bootstrap 5 / Font Awesome / jQuery（CDN） |
 | 可视化 | ECharts 5.4 / 百度地图 JavaScript API |
 | AI | DeepSeek API（deepseek-chat，3 次重试 + 90s 超时） |
+| RAG 检索 | ChromaDB（向量召回）+ jieba / scikit-learn（TF-IDF 关键词召回）混合融合 |
 
 ## 📁 项目结构
 
@@ -151,8 +155,12 @@ python tools\optimize_images.py # ⑤ 图片去重压缩（可选）
 
 ```bash
 cd ..\travel_web
+python manage.py rebuild_rag     # 首次/数据更新后构建 RAG 检索索引（可选，首次请求也会自动构建）
 python manage.py runserver
 ```
+
+> RAG 索引默认存储在 `~/.cache/travel_rag_storage`（ChromaDB 对非 ASCII 路径兼容性差，
+> 项目路径含中文时请勿改回项目目录；可用 `.env` 中 `RAG_STORAGE` 指定纯英文路径）。
 
 | 入口 | 地址 |
 |------|------|
@@ -163,10 +171,19 @@ python manage.py runserver
 
 ## 📊 数据规模
 
-- 景点总数：**1400+**（去重后 1399 条）
+- 景点总数：**1300+**（清洗后；已剔除携程接口混入的 110 条演出/票务条目，并修正 52 条城市错位）
 - 覆盖城市：15 个（北京/上海/广州/深圳/杭州/成都/西安/重庆/南京/苏州/武汉/厦门/青岛/长沙/三亚）
 - 覆盖省份：12 个
-- 本地图片：约 1390 张（经 MD5 去重 + 压缩，1200px / JPEG q80）
+- 本地图片：约 1300 张（经 MD5 去重 + 压缩，1200px / JPEG q80）
+
+## 🧠 RAG 检索说明
+
+| 特性 | 说明 |
+|------|------|
+| 混合召回 | ChromaDB 向量相似度（0.4）+ jieba TF-IDF 关键词得分（0.6），min-max 归一化后加权融合 |
+| 中文优化 | 中文查询以关键词为主，故 TF-IDF 权重更高；ChromaDB 不可用时自动降级为纯 TF-IDF |
+| 索引构建 | 惰性构建（首次请求）或 `python manage.py rebuild_rag` 手动重建 |
+| 降级链 | 混合检索 → 纯 TF-IDF → 数据库评分 TOP15（三层兜底，推荐功能永可用） |
 
 ## 🔌 内部 API（visualization）
 

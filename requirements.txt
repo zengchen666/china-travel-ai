@@ -7,11 +7,16 @@ pymysql==1.1.0
 cryptography==41.0.7
 
 # 数据处理
-pandas==2.1.4
-numpy==1.26.2
+pandas>=2.2.3
+numpy>=1.26.2
 
 # 爬虫与网络请求
 requests==2.31.0
+
+# RAG 检索（ChromaDB 向量 + jieba TF-IDF 混合）
+chromadb==1.5.9
+jieba==0.42.1
+scikit-learn>=1.5
 
 # 配置与工具
 python-dotenv==1.0.0

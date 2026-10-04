@@ -35,13 +35,17 @@
             <div class="card-body">
                 <form id="recommendForm">
                     <div class="mb-3">
-                        <label class="form-label"><i class="fas fa-city me-1"></i>目标城市</label>
-                        <select name="city" class="form-select" required>
-                            <option value="">请选择城市</option>
+                        <label class="form-label"><i class="fas fa-city me-1"></i>目标城市 <small class="text-muted">（选填）</small></label>
+                        <select name="city" class="form-select">
+                            <option value="">不限（根据偏好智能匹配）</option>
                             {% for city in cities %}
                             <option value="{{ city.name }}">{{ city.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-heart me-1"></i>旅行偏好 <small class="text-muted">（选填，RAG 智能检索）</small></label>
+                        <textarea name="preferences" class="form-control" rows="2" placeholder="例如：喜欢历史古迹和美食 / 想看海、预算有限 / 带孩子亲子游"></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><i class="fas fa-cloud-sun me-1"></i>旅游季节</label>
@@ -95,7 +99,7 @@
                         <i class="fas fa-lightbulb fa-4x mb-3" style="color:#ffc107"></i>
                         <h5>智能旅游规划</h5>
                         <p>填写左侧信息，AI将为您生成个性化旅游路线</p>
-                        <small>基于 DeepSeek 大模型 + 携程真实景点数据</small>
+                        <small>基于 DeepSeek 大模型 + RAG 景点向量检索（1400+ 真实景点）</small>
                     </div>
                 </div>
             </div>
@@ -124,13 +128,14 @@ document.getElementById('recommendForm').onsubmit = function(e) {
     var form = new FormData(this);
     var data = {
         city: form.get('city'),
+        preferences: form.get('preferences') || '',
         season: form.get('season'),
         days: parseInt(form.get('days')),
         budget: parseInt(form.get('budget'))
     };
-    
-    if (!data.city) {
-        alert('请选择目标城市');
+
+    if (!data.city && !data.preferences.trim()) {
+        alert('请选择目标城市，或填写旅行偏好让 AI 智能匹配');
         return;
     }
     
