@@ -1,13 +1,20 @@
-# 国内旅游景点分析与 AI 旅游路线推荐系统
+# 基于 RAG 的旅游景点智能推荐系统
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Django](https://img.shields.io/badge/Django-4.2-green)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
-![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-purple)
+![RAG](https://img.shields.io/badge/RAG-ChromaDB%20%2B%20TF--IDF-blueviolet)
+![LLM](https://img.shields.io/badge/LLM-DeepSeek-purple)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-基于 **Django + MySQL + ECharts + 百度地图 + DeepSeek 大模型** 的全栈旅游数据平台：
-爬取携程 15 个热门城市 1400+ 景点数据，经 Pandas 清洗入库，提供景点浏览、
+> 本科毕业设计项目 —《基于 RAG 的旅游景点智能推荐系统设计与实现》
+
+系统以 **RAG（检索增强生成）** 为核心：先用 ChromaDB 向量检索 + jieba TF-IDF 关键词检索
+从 1300+ 真实景点库中混合召回相关景点，再交由 DeepSeek 大模型生成逐日行程，
+有效抑制大模型幻觉、保证推荐结果有事实依据。
+
+整体技术栈为 **Django + MySQL + ECharts + 百度地图 + DeepSeek**：
+爬取携程 15 个热门城市景点数据，经 Pandas 清洗入库，提供景点浏览、
 数据可视化大屏、AI 智能行程规划与用户收藏的一站式服务。
 
 ---
@@ -67,7 +74,7 @@
 ## 📁 项目结构
 
 ```
-travel_recommendation/
+china-travel-ai/
 ├── crawler/                     # 数据采集与处理（独立运行）
 │   ├── config.py                # 爬取配置：15 城市、请求头、限速
 │   ├── spider.py                # 携程 API 分页爬虫
